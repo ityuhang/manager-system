@@ -1,0 +1,364 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include "user_info.h"
+#include "common.h"
+#include "admin.h"
+#include "unfinish.h"
+#include "clear_input_buffer.h"
+#include "passwd_confirm.h"
+
+#define USER_INFO_FILE "data/user_info.dat"
+#define USER_ID_BASE 100001
+
+void print_user_info(user_info* ui);
+
+
+// 仅在当前文件使用
+static unsigned int get_new_uid(void)
+{
+	user_info ui;
+	unsigned int uid;
+	
+	FILE* fp = fopen(USER_INFO_FILE, "rb");  // 以二进制打开
+
+	if(fp == NULL)
+	{
+		//perror("get_new_uid:fopen");
+		return USER_ID_BASE;
+	}
+
+	fseek(fp, -sizeof(ui), SEEK_END);
+	if(fread(&ui, sizeof(ui), 1, fp)==1)
+	{
+		uid = ui.user_id + 1;
+	}
+	else
+	{
+		uid = USER_ID_BASE;
+	}
+
+	fclose(fp);
+
+	return uid;
+
+}
+void add_month(time_t* cur_t, int n) {
+    struct tm* st = localtime(cur_t);
+    st->tm_mon += n; // 增加n个月
+    // 处理年份进位
+    st->tm_year += st->tm_mon / 12;
+    st->tm_mon %= 12;
+    *cur_t = mktime(st); // 转换回time_t
+}
+
+
+
+
+void user_reg(void)
+{
+	user_info ui;
+	int tmp_sex;
+	int tmp_type;
+	system("clear");
+	printf("请刷卡或者手动输入卡号:\n");
+	scanf("%s", ui.card_num);
+									
+	printf("请输入姓名:\n");
+	scanf("%s", ui.name);
+
+	printf("请输入性别(1女, 2男):\n");
+	scanf("%d", &tmp_sex);
+	ui.gender = tmp_sex;
+
+	printf("请输入手机号:\n");
+	scanf("%s", ui.phone_num);
+
+	printf("请输入卡类型:\n");
+	scanf("%d", &tmp_type);
+	ui.card_type = tmp_type;
+
+	if(ui.card_type == vip)
+	{
+	
+	}
+	else if(ui.card_type == super_vip)
+	{
+	
+	}
+	else if(ui.card_type == super_super_vip)
+	{
+	
+	}
+	ui.user_id = get_new_uid();
+
+	ui.ban_state = 0;
+	ui.revoke = 0;
+	ui.balance = 0;
+	ui.reg_time = time(NULL);
+	ui.expire_time = ui.reg_time;
+	add_month(&ui.expire_time, 1);
+
+	FILE* fp = fopen(USER_INFO_FILE, "ab");
+
+	if(fp == NULL)
+	{
+		perror("注册失败");
+		return;
+	}
+	
+	printf("会员注册成功!\n");
+	fwrite(&ui, sizeof(ui), 1, fp);
+
+	fclose(fp);
+	
+}
+
+
+
+void print_user_info(user_info* ui)
+{
+                printf("\n");
+                printf("卡号: %s\n", ui->card_num);
+             //   printf("会员ID: %u\n", ui->user_id);
+		printf("账户状态: ");
+		if(ui->ban_state == 0)
+		{
+			printf("正常\n");
+		}
+		else
+		{
+			printf("账户被封禁\n");
+		}
+                printf("姓名: %s\n", ui->name);
+                printf("性别: %s\n", ui->gender == female? "女" : "男");
+                printf("手机号: %s\n", ui->phone_num);
+		printf("会员类型: ");
+
+                if(ui->card_type == 1)
+                {
+                        printf("vip\n");
+                }
+                else if(ui->card_type == 2)
+                {
+                        printf("svip\n");
+                }
+                else if(ui->card_type == 3)
+                {
+                        printf("ssvip\n");
+                }
+		printf("账户余额: %.2lf\n", ui->balance);
+		
+		struct tm* rt;
+		rt = localtime(&ui->reg_time);	
+                printf("注册时间: %d年%d月%d日 %02d:%02d\n", rt->tm_year + 1900, rt->tm_mon + 1, rt->tm_mday, rt->tm_hour, rt->tm_min);
+
+
+                struct tm* dt;
+                dt = localtime(&ui->expire_time);
+                printf("到期时间: %d年%d月%d日 %02d:%02d\n", dt->tm_year + 1900, dt->tm_mon + 1, dt->tm_mday, dt->tm_hour, dt->tm_min);
+	
+		//press_any_key();
+}
+
+
+void user_show(void)
+{
+	user_info ui;
+	system("clear");
+	char card_num[11];
+
+	printf("\n会员请刷卡！\n");
+
+	scanf("%s", card_num);	
+
+
+	// 启动管理员界面
+	if(strcmp(card_num, "admin") == 0)
+	{
+		if(confirm_passwd())
+		{
+		admin_menu();
+		}
+		else
+		{
+			printf("密码错误\n");
+			press_any_key();
+		}
+	}
+
+	else{
+		FILE* fp = fopen(USER_INFO_FILE, "rb");
+
+		if(fp == NULL)
+		{
+			printf("卡片未注册，请联系工作人员处理!\n");
+			return;
+		}
+
+		while(fread(&ui, sizeof(ui), 1, fp) == 1)
+		{
+			if(strcmp(ui.card_num, card_num) == 0)
+			{
+				break;
+			}
+		}
+
+		if(feof(fp))
+		{
+			printf("\n卡片未注册, 请联系工作人员处理...\n");
+		} 
+		else if(ui.revoke == 1)
+		{
+			printf("\n该会员已注销\n");
+		}
+		else if(ui.ban_state == 1)
+		{
+			printf("\n该账户已被封禁,请联系工作人员进行处理...\n");
+		}
+		else
+		{
+			print_user_info(&ui);
+		}
+
+		getchar();
+		press_any_key();
+
+		fclose(fp);
+	}
+}
+
+
+
+void user_del(void)
+{
+	char num[50];
+	user_info ui;
+	unsigned int uid;
+	printf("请输入要注销的会员卡号/会员ID/手机号:\n");
+	scanf("%s", num);
+
+
+	FILE* fp = fopen(USER_INFO_FILE, "r+");
+	
+	while(fread(&ui, sizeof(ui), 1, fp) == 1)
+	{
+		if(strcmp(num, ui.card_num) == 0 || strcmp(num, ui.phone_num) == 0 || atol(num) == ui.user_id)
+		{
+			break;			
+		}
+	}
+
+	if(feof(fp))
+	{
+		printf("\n不存在此会员, 注销失败！\n");
+	}
+	else
+	{
+		char select;
+		printf("要注销的会员信息如下: \n");
+		print_user_info(&ui);
+
+		printf("\n是否确认注销此会员(Y/N):\n");
+		char c;
+		while((c = getchar()) != '\n' && c != EOF);  // 清空缓冲区
+
+		select = getchar();
+
+		if(select == 'Y' || select == 'y')
+		{
+			ui.revoke = 1;
+			fseek(fp, -sizeof(ui), SEEK_CUR);
+
+			fwrite(&ui, sizeof(ui), 1, fp);
+
+			printf("\n会员已注销\n");	
+		}
+
+	}
+
+	fclose(fp);
+
+}
+
+
+void find_user(void)
+{
+
+	char num[50];
+	user_info ui;
+	unsigned int uid;
+	while(1)
+	{
+		printf("请输入会员的卡号/ID/手机号(输入 0 退出):\n");
+		//cb();
+		scanf("%s", num);
+		
+		if(strcmp(num, "0") == 0)
+		{
+			return;
+		}
+
+		FILE* fp = fopen(USER_INFO_FILE, "r+");
+		
+		fseek(fp, 0, SEEK_SET);
+
+		while(fread(&ui, sizeof(ui), 1, fp) == 1)
+		{
+			if(strcmp(num, ui.card_num) == 0 || atol(num) == ui.user_id || strcmp(num, ui.phone_num) == 0)
+			{
+				break;
+			}
+		}
+
+		if(feof(fp))
+		{
+			printf("\n不存在此会员，请重试!\n");
+			fclose(fp);
+			continue;
+		}
+
+		
+
+		char select;
+		system("clear");
+
+
+		printf("查询到的会员信息如下:\n");
+
+		if(ui.revoke == 1)
+		{
+			printf("\n(该账户已注销)");
+		}
+
+		print_user_info(&ui);
+		printf("\n修改会员信息请按M\n重新查询请按F\n");
+
+
+		//cb();  // 清空缓冲区
+
+		getchar();
+		select = getchar();
+		if(select == 'f' || select == 'F')
+		{
+			fclose(fp);
+			continue;
+		}
+
+		if(select == 'M' || select == 'm')
+		{
+			user_mod();
+		}
+
+
+		fclose(fp);
+	}
+
+}
+
+
+
+
+
+
