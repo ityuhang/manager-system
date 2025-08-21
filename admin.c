@@ -120,7 +120,7 @@ void user_mod(void)
 		else if(select == '7')
 		{
 			printf("0未注销 1已注销\n");
-			scanf("%d", &ui.revoke);
+			scanf("%d", &(ui.ban_state));
 		}
 		else if(select == '8')
 		{

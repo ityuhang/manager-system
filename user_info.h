@@ -1,6 +1,7 @@
 #ifndef USER_H
 #define USER_H
 #include <stdio.h>
+#include <time.h>
 
 typedef enum
 {
@@ -12,9 +13,10 @@ typedef enum
 
 typedef enum
 {
-	vip = 1,	
-	super_vip,	
-	super_super_vip 	
+	daily = 1,		// 天卡
+	weekly = 2,		// 周卡
+    monthly = 3,	// 月卡
+	yearly = 4,		// 年卡
 } package;
 
 
@@ -30,7 +32,7 @@ typedef struct
 	package card_type;	// 卡类型
 
 	int ban_state; 		// 删除状态, 0 未禁用, 1 已禁用
-	int revoke;  		// 是否注销, 0 未注销, 1 已注销
+	int out_date;  		// 是否过期, 0 未过期, 1 已过期
 	double balance;		// 账户余额
 	time_t reg_time;	// 注册时间
 	time_t expire_time;	// 到期时间		

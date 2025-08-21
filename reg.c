@@ -53,8 +53,23 @@ void add_month(time_t* cur_t, int n) {
     *cur_t = mktime(st); // 转换回time_t
 }
 
+void add_day(time_t* cur_t, int n) {
+    struct tm* st = localtime(cur_t);
+    st->tm_mday += n; // 增加n天
+    *cur_t = mktime(st); // 转换回time_t
+}
 
+void add_year(time_t* cur_t, int n) {
+	struct tm* st = localtime(cur_t);
+	st->tm_year += n; // 增加n年
+	*cur_t = mktime(st); // 转换回time_t
+}
 
+void add_week(time_t* cur_t, int n) {
+    struct tm* st = localtime(cur_t);
+    st->tm_mday += n * 7; // 增加n周
+    *cur_t = mktime(st); // 转换回time_t
+}
 
 void user_reg(void)
 {
@@ -79,22 +94,25 @@ void user_reg(void)
 	scanf("%d", &tmp_type);
 	ui.card_type = tmp_type;
 
-	if(ui.card_type == vip)
+	if(ui.card_type == daily)
 	{
-	
+		add_day(&ui.expire_time, 1);
 	}
-	else if(ui.card_type == super_vip)
+	else if(ui.card_type == weekly)
 	{
-	
+		add_week(&ui.expire_time, 1);	
 	}
-	else if(ui.card_type == super_super_vip)
+	else if(ui.card_type == monthly)
 	{
-	
+		add_month(&ui.expire_time, 1);
 	}
-	ui.user_id = get_new_uid();
+	else if(ui.card_type == yearly)
+	{
+		add_year(&ui.expire_time, 1);
+	}
 
 	ui.ban_state = 0;
-	ui.revoke = 0;
+	ui.out_date = 0;
 	ui.balance = 0;
 	ui.reg_time = time(NULL);
 	ui.expire_time = ui.reg_time;
@@ -134,19 +152,23 @@ void print_user_info(user_info* ui)
                 printf("姓名: %s\n", ui->name);
                 printf("性别: %s\n", ui->gender == female? "女" : "男");
                 printf("手机号: %s\n", ui->phone_num);
-		printf("会员类型: ");
+				printf("会员类型: ");
 
                 if(ui->card_type == 1)
                 {
-                        printf("vip\n");
+                        printf("天卡\n");
                 }
                 else if(ui->card_type == 2)
                 {
-                        printf("svip\n");
+                        printf("周卡\n");
                 }
                 else if(ui->card_type == 3)
                 {
-                        printf("ssvip\n");
+                        printf("月卡\n");
+                }
+                else if(ui->card_type == 4)
+                {
+                        printf("年卡\n");
                 }
 		printf("账户余额: %.2lf\n", ui->balance);
 		
@@ -209,7 +231,7 @@ void user_show(void)
 		{
 			printf("\n卡片未注册, 请联系工作人员处理...\n");
 		} 
-		else if(ui.revoke == 1)
+		else if(ui.ban_state == 1)
 		{
 			printf("\n该会员已注销\n");
 		}
@@ -222,7 +244,6 @@ void user_show(void)
 			print_user_info(&ui);
 		}
 
-		getchar();
 		press_any_key();
 
 		fclose(fp);
@@ -268,7 +289,7 @@ void user_del(void)
 
 		if(select == 'Y' || select == 'y')
 		{
-			ui.revoke = 1;
+			ui.ban_state = 1;
 			fseek(fp, -sizeof(ui), SEEK_CUR);
 
 			fwrite(&ui, sizeof(ui), 1, fp);
@@ -327,7 +348,7 @@ void find_user(void)
 
 		printf("查询到的会员信息如下:\n");
 
-		if(ui.revoke == 1)
+		if(ui.ban_state == 1)
 		{
 			printf("\n(该账户已注销)");
 		}
