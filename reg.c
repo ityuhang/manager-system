@@ -126,20 +126,19 @@ void user_reg(void)
 		return;
 	}
 	
-	printf("会员注册成功!\n");
-	fwrite(&ui, sizeof(ui), 1, fp);
 
+	fwrite(&ui, sizeof(ui), 1, fp);
 	fclose(fp);
-	
+	printf("会员注册成功!\n");
 }
 
 
 
 void print_user_info(user_info* ui)
 {
-                printf("\n");
-                printf("卡号: %s\n", ui->card_num);
-             //   printf("会员ID: %u\n", ui->user_id);
+        printf("\n");
+        printf("卡号: %s\n", ui->card_num);
+        //   printf("会员ID: %u\n", ui->user_id);
 		printf("账户状态: ");
 		if(ui->ban_state == 0)
 		{
@@ -147,7 +146,7 @@ void print_user_info(user_info* ui)
 		}
 		else
 		{
-			printf("账户被封禁\n");
+			printf("已注销\n");
 		}
                 printf("姓名: %s\n", ui->name);
                 printf("性别: %s\n", ui->gender == female? "女" : "男");
@@ -194,7 +193,6 @@ void user_show(void)
 	printf("\n会员请刷卡！\n");
 
 	scanf("%s", card_num);	
-
 
 	// 启动管理员界面
 	if(strcmp(card_num, "admin") == 0)
