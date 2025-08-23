@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "user_info.h"
+#include "common.h"
 
 int main()
 {

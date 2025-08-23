@@ -83,6 +83,34 @@ void add_week(time_t* cur_t, int n) {
     *cur_t = mktime(st); // 转换回time_t
 }
 
+int check_card_num(char num[])
+{
+	FILE* fp = fopen(USER_INFO_FILE, "r");
+
+	if(fp == NULL)
+	{
+		perror("读取用户信息文件失败");
+		return -1;
+	}
+	user_info ui;
+	while(fread(&ui, sizeof(ui), 1, fp) == 1)
+	{
+		if(strcmp(num, ui.card_num) == 0)
+		{
+			return 0;
+		}
+	}
+	if(feof(fp))
+	{
+		return 1;
+	}
+	return 0;
+
+}
+
+
+
+
 void user_reg(void)
 {
 	user_info ui;
@@ -91,7 +119,11 @@ void user_reg(void)
 	system("clear");
 	printf("请刷卡或者手动输入卡号:\n");
 	scanf("%s", ui.card_num);
-									
+	if(!check_card_num(ui.card_num))
+	{
+		printf("此卡已被注册\n");
+		return;
+	}	
 	printf("请输入姓名:\n");
 	scanf("%s", ui.name);
 
@@ -112,7 +144,7 @@ void user_reg(void)
 	}
 	else if(ui.card_type == weekly)
 	{
-		add_week(&ui.expire_time, 1);	
+		add_week(&ui.expire_time, 1);
 	}
 	else if(ui.card_type == monthly)
 	{
