@@ -15,6 +15,18 @@
 void print_user_info(user_info* ui);
 
 
+
+// 检查到期时间，已到期返回1，未到期返回0
+int check_data(user_info* ui)
+{
+	if(ui->expire_time <= time(NULL))
+	{
+		return 1;
+	}
+	return 0;
+}
+
+
 // 仅在当前文件使用
 static unsigned int get_new_uid(void)
 {
@@ -148,27 +160,37 @@ void print_user_info(user_info* ui)
 		{
 			printf("已注销\n");
 		}
-                printf("姓名: %s\n", ui->name);
-                printf("性别: %s\n", ui->gender == female? "女" : "男");
-                printf("手机号: %s\n", ui->phone_num);
-				printf("会员类型: ");
-
-                if(ui->card_type == 1)
-                {
-                        printf("天卡\n");
-                }
-                else if(ui->card_type == 2)
-                {
-                        printf("周卡\n");
-                }
-                else if(ui->card_type == 3)
-                {
-                        printf("月卡\n");
-                }
-                else if(ui->card_type == 4)
-                {
-                        printf("年卡\n");
-                }
+		
+		ui->out_date = check_data(ui);
+		printf("是否过期: ");
+		if(ui->out_date == 0)
+		{
+			printf("未过期\n");
+		}
+		else
+		{
+			printf("已过期\n");
+		}
+        printf("姓名: %s\n", ui->name);
+        printf("性别: %s\n", ui->gender == female? "女" : "男");
+        printf("手机号: %s\n", ui->phone_num);
+		printf("会员类型: ");
+        if(ui->card_type == 1)
+        {
+                printf("天卡\n");
+        }
+        else if(ui->card_type == 2)
+        {
+                printf("周卡\n");
+        }
+        else if(ui->card_type == 3)
+        {
+                printf("月卡\n");
+        }
+        else if(ui->card_type == 4)
+        {
+                printf("年卡\n");
+        }
 		printf("账户余额: %.2lf\n", ui->balance);
 		
 		struct tm* rt;
@@ -182,6 +204,8 @@ void print_user_info(user_info* ui)
 	
 		//press_any_key();
 }
+
+
 
 
 void user_show(void)
@@ -239,6 +263,7 @@ void user_show(void)
 		}
 		else
 		{
+			ui.out_date = check_data(&ui);
 			print_user_info(&ui);
 		}
 
@@ -375,9 +400,3 @@ void find_user(void)
 	}
 
 }
-
-
-
-
-
-
