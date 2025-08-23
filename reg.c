@@ -352,7 +352,7 @@ void find_user(void)
 		}
 
 		print_user_info(&ui);
-		printf("\n修改会员信息请按M\n重新查询请按F\n");
+		printf("\n修改会员信息请按3\n重新查询请按F\n");
 
 
 		//cb();  // 清空缓冲区
@@ -365,7 +365,7 @@ void find_user(void)
 			continue;
 		}
 
-		if(select == 'M' || select == 'm')
+		if(select == '3')
 		{
 			user_mod();
 		}

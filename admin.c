@@ -8,7 +8,7 @@
 #include "clear_input_buffer.h"
 
 
-#define  MENU_SIZE 5
+#define  MENU_SIZE 6
 #define USER_INFO_FILE "./data/user_info.dat"
 
 
@@ -133,6 +133,15 @@ void user_mod(void)
 		else if(select == '9')
 		{
 			printf("格式: 2025-1-1\n");	
+			char date[20];
+			scanf("%s", date);
+			int year, month, day;
+			sscanf(date, "%d-%d-%d", &year, &month, &day);
+			struct tm tm = {0};
+			tm.tm_year = year - 1900;
+			tm.tm_mon = month - 1;
+			tm.tm_mday = day;
+			ui.expire_time = mktime(&tm);
 		}
 
 
@@ -151,8 +160,6 @@ void user_mod(void)
                     printf("\n会员修改成功!\n");
                 }
 				if(succeed == 0) printf("会员修改失败!\n");
-				press_any_key();
-
         }
 
         fclose(fp);
@@ -189,7 +196,7 @@ void admin_menu(void)
 
 		hello_admin();
 		printf("\n");
-		char menu[MENU_SIZE][50] = {"注册用户", "查找并修改用户", "用户注销", "展示所有用户", "退出系统"};
+		char menu[MENU_SIZE][50] = {"注册用户", "查找用户", "修改用户信息", "用户注销", "展示所有用户", "退出系统"};
 
 		for(int i = 0; i < MENU_SIZE; i++)
 		{
@@ -208,13 +215,17 @@ void admin_menu(void)
 		}
 		else if(op == 3)
 		{
-			user_del();
+			user_mod();
 		}
 		else if(op == 4)
 		{
-				show_all_users();
+			user_del();
 		}
 		else if(op == 5)
+		{
+			show_all_users();
+		}
+		else if(op == 6)
 		{
 			break;
 		}

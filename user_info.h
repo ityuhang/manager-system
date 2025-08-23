@@ -35,7 +35,7 @@ typedef struct
 	int out_date;  		// 是否过期, 0 未过期, 1 已过期
 	double balance;		// 账户余额
 	time_t reg_time;	// 注册时间
-	time_t expire_time;	// 到期时间		
+	time_t expire_time;	// 到期时间
 } user_info;
 
 void user_reg(void);
