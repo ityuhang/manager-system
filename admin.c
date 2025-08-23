@@ -64,6 +64,12 @@ void user_mod(void)
 
         FILE* fp = fopen(USER_INFO_FILE, "r+");
 
+		if(fp == NULL)
+		{
+		perror("读取用户信息失败");
+		return;
+		}
+
         while(fread(&ui, sizeof(ui), 1, fp) == 1)
         {
             if(strcmp(num, ui.card_num) == 0 || strcmp(num, ui.phone_num) == 0 || atol(num) == ui.user_id)
@@ -174,7 +180,7 @@ void show_all_users()
 	
 	if(fp == NULL)
 	{
-		printf("用户信息读取失败\n");
+		perror("用户信息读取失败");
 		return;
 	}
 
@@ -229,9 +235,8 @@ void admin_menu(void)
 		{
 			break;
 		}
-
-		press_any_key();
 	}
+	press_any_key();
 }
 
 

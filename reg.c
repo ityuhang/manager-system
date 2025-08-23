@@ -318,6 +318,11 @@ void user_del(void)
 
 
 	FILE* fp = fopen(USER_INFO_FILE, "r+");
+	if(fp == NULL)
+	{
+		perror("读取用户信息失败");
+		return;
+	}
 	
 	while(fread(&ui, sizeof(ui), 1, fp) == 1)
 	{
@@ -379,6 +384,12 @@ void find_user(void)
 
 		FILE* fp = fopen(USER_INFO_FILE, "r+");
 		
+		if(fp == NULL)
+		{
+		perror("读取用户信息失败");
+		return;
+		}
+
 		fseek(fp, 0, SEEK_SET);
 
 		while(fread(&ui, sizeof(ui), 1, fp) == 1)
