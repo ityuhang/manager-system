@@ -171,10 +171,91 @@ void user_mod(void)
         fclose(fp);
 
 }
+
+
+
+
+
+
+
+// 辅助函数：将时间戳转换为格式化字符串
+void format_time(time_t t, char* buffer, int buffer_size) {
+    if (t == 0) {
+        snprintf(buffer, buffer_size, "未设置");
+        return;
+    }
+    struct tm *tm_info = localtime(&t);
+    strftime(buffer, buffer_size, "%Y-%m-%d %H:%M", tm_info);
+}
+
+// 辅助函数：获取性别字符串
+const char* get_gender_str(sex g) {
+    switch(g) {
+        case female: return "女";
+        case male: return "男";
+        case unknow: return "未知";
+        default: return "未知";
+    }
+}
+
+// 辅助函数：获取卡类型字符串
+const char* get_card_type_str(package p) {
+    switch(p) {
+        case daily: return "天卡";
+        case weekly: return "周卡";
+        case monthly: return "月卡";
+        case yearly: return "年卡";
+        default: return "未知";
+    }
+}
+
+// 辅助函数：获取状态字符串
+const char* get_state_str(int state) {
+    return state ? "是" : "否";
+}
+
+// TODO: 重写这部分
+/*
+// 计算字符串的显示宽度（汉字算2个字符宽度，ASCII字符算1个）
+int get_display_width(const char *str) {
+    int width = 0;
+    unsigned char *p = (unsigned char *)str;
+    
+    while (*p) {
+        if (*p >= 0x80) {
+            // 中文字符，占2个宽度
+            width += 2;
+            p += 2; // 跳过中文字符的第二个字节
+        } else {
+            // ASCII字符，占1个宽度
+            width += 1;
+            p += 1;
+        }
+    }
+    return width;
+}
+
+// 格式化姓名，确保2个汉字和3个汉字对齐
+void format_name(char *dest, const char *src, int max_width) {
+    strncpy(dest, src, max_width);
+    dest[max_width] = '\0';
+    
+    // 计算当前显示宽度
+    int current_width = get_display_width(dest);
+    
+    // 添加空格直到达到最大宽度
+    while (current_width < max_width) {
+        strcat(dest, " ");
+        current_width++;
+    }
+}
+
+*/
+
 // 展示所有用户，包括已注销用户
 void show_all_users()
 {
-	user_info ui;
+	user_info u;
 
 	FILE* fp = fopen(USER_INFO_FILE, "rb");
 	
@@ -183,16 +264,86 @@ void show_all_users()
 		perror("用户信息读取失败");
 		return;
 	}
-
-	while(fread(&ui, sizeof(ui), 1, fp) > 0)
+	system("clear");
+ 	// 表头
+    printf("┌──────┬──────────┬────────┬────┬─────────────┬────────┬────────┬────────┬──────────┬─────────────────────┬─────────────────────┐\n");
+    printf("│用户ID│   卡号   │  姓名  │性别│   手机号    │ 卡类型 │ 已禁用 │ 已过期 │   余额   │      注册时间       │      到期时间       │\n");
+    printf("├──────┼──────────┼────────┼────┼─────────────┼────────┼────────┼────────┼──────────┼─────────────────────┼─────────────────────┤\n");
+	while(fread(&u, sizeof(u), 1, fp) > 0)
 	{
-		print_user_info(&ui);
+		// 格式化时间
+        char reg_time_str[32];
+        char expire_time_str[32];
+        format_time(u.reg_time, reg_time_str, sizeof(reg_time_str));
+        format_time(u.expire_time, expire_time_str, sizeof(expire_time_str));
+        
+        // 格式化姓名，确保对齐
+        char formatted_name[50];
+        format_name(formatted_name, u.name, 10); // 10个字符宽度
+        
+        printf("│%6u│%10s│%s│%-4s│%13s│%-8s│%-8s│%-8s│%10.2f│%-21s│%-21s│\n",
+               u.user_id,
+               u.card_num,
+               formatted_name,
+               get_gender_str(u.gender),
+               u.phone_num,
+               get_card_type_str(u.card_type),
+               get_state_str(u.ban_state),
+               get_state_str(u.out_date),
+               u.balance,
+               reg_time_str,
+               expire_time_str);
+    
 	}
+	
+	 // 表尾
+    printf("└──────┴──────────┴────────┴────┴─────────────┴────────┴────────┴────────┴──────────┴─────────────────────┴─────────────────────┘\n");
+	fclose(fp);
 
 }
+ 
 
+// 先不删了
+/*
+// 彻底删除用户信息
+void delete_user()
+{
+ char num[50];
+        user_info ui;
 
+        printf("请输入要修改的会员卡号/会员ID/手机号:\n");
+        scanf("%s", num);
+		getchar();
 
+        FILE* fp = fopen(USER_INFO_FILE, "r+");
+
+		if(fp == NULL)
+		{
+		perror("读取用户信息失败");
+		return;
+		}
+
+        while(fread(&ui, sizeof(ui), 1, fp) == 1)
+        {
+            if(strcmp(num, ui.card_num) == 0 || strcmp(num, ui.phone_num) == 0 || atol(num) == ui.user_id)
+			{	
+                break;
+            }
+        }
+
+        if(feof(fp))
+        {
+                printf("\n不存在此会员, 请重试\n");
+        }
+        else
+		{
+			fseek(fp, -sizeof(ui), SEEK_CUR);
+			
+
+		}
+
+}
+*/
 
 void admin_menu(void)
 {
@@ -239,5 +390,3 @@ void admin_menu(void)
 	}
 	
 }
-
-
