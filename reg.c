@@ -83,15 +83,18 @@ void add_week(time_t* cur_t, int n) {
     *cur_t = mktime(st); // 转换回time_t
 }
 
+
+
+// 如果卡号被注册返回0， 未被注册返回1
 int check_card_num(char num[])
 {
 	FILE* fp = fopen(USER_INFO_FILE, "r");
 
 	if(fp == NULL)
 	{
-		perror("读取用户信息文件失败");
-		return -1;
+		return 1;
 	}
+
 	user_info ui;
 	while(fread(&ui, sizeof(ui), 1, fp) == 1)
 	{
@@ -107,8 +110,6 @@ int check_card_num(char num[])
 	return 0;
 
 }
-
-
 
 
 void user_reg(void)
@@ -137,6 +138,8 @@ void user_reg(void)
 	printf("请输入卡类型:\n");
 	scanf("%d", &tmp_type);
 	ui.card_type = tmp_type;
+	ui.reg_time = time(NULL);
+	ui.expire_time = ui.reg_time;
 
 	if(ui.card_type == daily)
 	{
@@ -158,9 +161,7 @@ void user_reg(void)
 	ui.ban_state = 0;
 	ui.out_date = 0;
 	ui.balance = 0;
-	ui.reg_time = time(NULL);
-	ui.expire_time = ui.reg_time;
-	add_month(&ui.expire_time, 1);
+
 
 	FILE* fp = fopen(USER_INFO_FILE, "ab");
 
