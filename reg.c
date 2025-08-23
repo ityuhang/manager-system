@@ -120,11 +120,13 @@ void user_reg(void)
 	system("clear");
 	printf("请刷卡或者手动输入卡号:\n");
 	scanf("%s", ui.card_num);
+
 	if(!check_card_num(ui.card_num))
 	{
 		printf("此卡已被注册\n");
 		return;
 	}	
+	
 	printf("请输入姓名:\n");
 	scanf("%s", ui.name);
 

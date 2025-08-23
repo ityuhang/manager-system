@@ -235,8 +235,9 @@ void admin_menu(void)
 		{
 			break;
 		}
+		press_any_key();
 	}
-	press_any_key();
+	
 }
 
 
