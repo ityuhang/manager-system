@@ -256,9 +256,10 @@ void user_show(void)
 	// 启动管理员界面
 	if(strcmp(card_num, "admin") == 0)
 	{
+		
 		if(confirm_passwd())
 		{
-		admin_menu();
+			admin_menu();
 		}
 		else
 		{

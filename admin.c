@@ -214,8 +214,9 @@ const char* get_state_str(int state) {
     return state ? "是" : "否";
 }
 
+
 // TODO: 重写这部分
-/*
+
 // 计算字符串的显示宽度（汉字算2个字符宽度，ASCII字符算1个）
 int get_display_width(const char *str) {
     int width = 0;
@@ -250,7 +251,7 @@ void format_name(char *dest, const char *src, int max_width) {
     }
 }
 
-*/
+
 
 // 展示所有用户，包括已注销用户
 void show_all_users()
