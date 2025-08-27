@@ -176,8 +176,6 @@ void user_mod(void)
 
 
 
-
-
 // 辅助函数：将时间戳转换为格式化字符串
 void format_time(time_t t, char* buffer, int buffer_size) {
     if (t == 0) {
@@ -187,6 +185,7 @@ void format_time(time_t t, char* buffer, int buffer_size) {
     struct tm *tm_info = localtime(&t);
     strftime(buffer, buffer_size, "%Y-%m-%d %H:%M", tm_info);
 }
+
 
 // 辅助函数：获取性别字符串
 const char* get_gender_str(sex g) {
@@ -215,92 +214,134 @@ const char* get_state_str(int state) {
 }
 
 
-// TODO: 重写这部分
-
-// 计算字符串的显示宽度（汉字算2个字符宽度，ASCII字符算1个）
+// 计算字符串的显示宽度（UTF-8编码，汉字算2个字符宽度，ASCII字符算1个）
 int get_display_width(const char *str) {
     int width = 0;
-    unsigned char *p = (unsigned char *)str;
+    const char *p = str;
     
     while (*p) {
-        if (*p >= 0x80) {
-            // 中文字符，占2个宽度
-            width += 2;
-            p += 2; // 跳过中文字符的第二个字节
-        } else {
+        if ((*p & 0x80) == 0) {
             // ASCII字符，占1个宽度
             width += 1;
+            p += 1;
+        } else if ((*p & 0xE0) == 0xC0) {
+            // 2字节UTF-8字符（通常为欧洲语言字符）
+            width += 1; // 假设欧洲字符宽度为1
+            p += 2;
+        } else if ((*p & 0xF0) == 0xE0) {
+            // 3字节UTF-8字符（通常为中文字符）
+            width += 2; // 中文字符宽度为2
+            p += 3;
+        } else if ((*p & 0xF8) == 0xF0) {
+            // 4字节UTF-8字符（特殊字符或表情）
+            width += 2; // 假设宽度为2
+            p += 4;
+        } else {
+            // 无效的UTF-8序列，跳过1字节
             p += 1;
         }
     }
     return width;
 }
 
-// 格式化姓名，确保2个汉字和3个汉字对齐
-void format_name(char *dest, const char *src, int max_width) {
-    strncpy(dest, src, max_width);
-    dest[max_width] = '\0';
-    
+// 格式化显示宽度
+void format_field(char *dest, const char *src, int max_width) {
     // 计算当前显示宽度
-    int current_width = get_display_width(dest);
+    int current_width = get_display_width(src);
     
-    // 添加空格直到达到最大宽度
-    while (current_width < max_width) {
-        strcat(dest, " ");
-        current_width++;
+    // 复制原始内容
+    strcpy(dest, src);
+    
+    // 如果当前宽度小于最大宽度，添加空格
+    if (current_width < max_width) {
+        int i;
+        for (i = strlen(dest); current_width < max_width; current_width++, i++) {
+            dest[i] = ' ';
+        }
+        dest[i] = '\0';
     }
+	
 }
-
 
 
 // 展示所有用户，包括已注销用户
 void show_all_users()
 {
-	user_info u;
+    user_info u;
+    FILE* fp = fopen(USER_INFO_FILE, "rb");
+    
+    if(fp == NULL)
+    {
+        perror("用户信息读取失败");
+        return;
+    }
+    
 
-	FILE* fp = fopen(USER_INFO_FILE, "rb");
-	
-	if(fp == NULL)
-	{
-		perror("用户信息读取失败");
-		return;
-	}
-	system("clear");
- 	// 表头
-    printf("┌──────┬──────────┬────────┬────┬─────────────┬────────┬────────┬────────┬──────────┬─────────────────────┬─────────────────────┐\n");
-    printf("│用户ID│   卡号   │  姓名  │性别│   手机号    │ 卡类型 │ 已禁用 │ 已过期 │   余额   │      注册时间       │      到期时间       │\n");
-    printf("├──────┼──────────┼────────┼────┼─────────────┼────────┼────────┼────────┼──────────┼─────────────────────┼─────────────────────┤\n");
-	while(fread(&u, sizeof(u), 1, fp) > 0)
-	{
-		// 格式化时间
+    system("clear");
+    // 表头 - 每列固定20字符宽度
+    printf("┌────────────────────┬────────────────────┬────────────────────┬────────────────────┬────────────────────┬────────────────────┬────────────────────┬────────────────────┬────────────────────┬────────────────────┬────────────────────┐\n");
+    printf("│      用户ID        │       卡号         │       姓名         │       性别         │      手机号        │      卡类型        │      已禁用        │      已过期        │       余额         │     注册时间       │     到期时间       │\n");
+    printf("├────────────────────┼────────────────────┼────────────────────┼────────────────────┼────────────────────┼────────────────────┼────────────────────┼────────────────────┼────────────────────┼────────────────────┼────────────────────┤\n");
+    
+    while(fread(&u, sizeof(u), 1, fp) > 0)
+    {
+        // 格式化时间
         char reg_time_str[32];
         char expire_time_str[32];
         format_time(u.reg_time, reg_time_str, sizeof(reg_time_str));
         format_time(u.expire_time, expire_time_str, sizeof(expire_time_str));
         
-        // 格式化姓名，确保对齐
-        char formatted_name[50];
-        format_name(formatted_name, u.name, 10); // 10个字符宽度
+        // 格式化所有字段为20字符宽度
+        char formatted_user_id[60];
+        char formatted_card_num[60];
+        char formatted_name[60];
+        char formatted_gender[60];
+        char formatted_phone[60];
+        char formatted_card_type[60];
+        char formatted_ban_state[60];
+        char formatted_out_date[60];
+        char formatted_balance[60];
+        char formatted_reg_time[60];
+        char formatted_expire_time[60];
         
-        printf("│%6u│%10s│%s│%-4s│%13s│%-8s│%-8s│%-8s│%10.2f│%-21s│%-21s│\n",
-               u.user_id,
-               u.card_num,
+        // 转换为字符串并格式化
+        char temp[50];
+        
+        snprintf(temp, sizeof(temp), "%u", u.user_id);
+        format_field(formatted_user_id, temp, 20);
+        
+        format_field(formatted_card_num, u.card_num, 20);
+        format_field(formatted_name, u.name, 20);
+        format_field(formatted_gender, get_gender_str(u.gender), 20);
+        format_field(formatted_phone, u.phone_num, 20);
+        format_field(formatted_card_type, get_card_type_str(u.card_type), 20);
+        format_field(formatted_ban_state, get_state_str(u.ban_state), 20);
+        format_field(formatted_out_date, get_state_str(u.out_date), 20);
+        
+        snprintf(temp, sizeof(temp), "%.2f", u.balance);
+        format_field(formatted_balance, temp, 20);
+        
+        format_field(formatted_reg_time, reg_time_str, 20);
+        format_field(formatted_expire_time, expire_time_str, 20);
+        
+        printf("│%s│%s│%s│%s│%s│%s│%s│%s│%s│%s│%s│\n",
+               formatted_user_id,
+               formatted_card_num,
                formatted_name,
-               get_gender_str(u.gender),
-               u.phone_num,
-               get_card_type_str(u.card_type),
-               get_state_str(u.ban_state),
-               get_state_str(u.out_date),
-               u.balance,
-               reg_time_str,
-               expire_time_str);
+               formatted_gender,
+               formatted_phone,
+               formatted_card_type,
+               formatted_ban_state,
+               formatted_out_date,
+               formatted_balance,
+               formatted_reg_time,
+               formatted_expire_time);
+    }
     
-	}
-	
-	 // 表尾
-    printf("└──────┴──────────┴────────┴────┴─────────────┴────────┴────────┴────────┴──────────┴─────────────────────┴─────────────────────┘\n");
-	fclose(fp);
-
+    // 表尾
+    printf("└────────────────────┴────────────────────┴────────────────────┴────────────────────┴────────────────────┴────────────────────┴────────────────────┴────────────────────┴────────────────────┴────────────────────┴────────────────────┘\n");
+    
+    fclose(fp);
 }
  
 

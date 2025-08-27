@@ -28,7 +28,7 @@ typedef struct
 	
 	char name[50];		// 姓名
 	sex gender;		// 性别
-	char phone_num[12]; 	// 手机号
+	char phone_num[21]; 	// 手机号
 	package card_type;	// 卡类型
 
 	int ban_state; 		// 删除状态, 0 未禁用, 1 已禁用
