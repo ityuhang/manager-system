@@ -165,6 +165,9 @@ void user_reg(void)
 	ui.balance = 0;
 
 
+	unsigned int uid = get_new_uid();
+	ui.user_id = uid;
+
 	FILE* fp = fopen(USER_INFO_FILE, "ab");
 
 	if(fp == NULL)
