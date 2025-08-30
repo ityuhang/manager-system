@@ -29,6 +29,7 @@ int hash_del(HashTable* table, const char* key);
 void* hash_get(HashTable* table, const char* key);
 // 遍历哈希表
 void hash_iterate(HashTable* table, void (*func)(const char*, void*));
-
+// 销毁哈希表
+void destroy_hash_table(HashTable* table);
 
 #endif

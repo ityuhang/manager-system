@@ -148,6 +148,33 @@ void* hash_get(HashTable* table, const char* key)
     
 }
 
+// 销毁哈希表
+void destroy_hash_table(HashTable* table) 
+{
+    HashNode* head = NULL, *temp = NULL;
+
+    if (!table) 
+    {
+        return;
+    }
+
+    for (size_t i = 0; i < table->capacity; i++) 
+    {
+        head = table->buckets[i];
+
+        while(head != NULL) 
+        {
+            temp = head;
+            head = head->next;
+            free(temp->key);
+            free(temp);
+        }
+    }
+
+    free(table->buckets);
+    free(table);
+}
+
 // 遍历哈希表
 void hash_iterate(HashTable* table, void (*func)(const char*, void*))
 {

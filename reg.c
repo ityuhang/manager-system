@@ -335,6 +335,7 @@ void user_show(void)
 		else
 		{
 			ui.out_date = check_data(&ui);
+			system("clear");
 			print_user_info(&ui);
 		}
 
