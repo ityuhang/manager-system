@@ -148,6 +148,17 @@ void user_mod(void)
 			tm.tm_mon = month - 1;
 			tm.tm_mday = day;
 			ui.expire_time = mktime(&tm);
+
+
+            // 更新过期状态
+            if(ui.expire_time > time(NULL))
+            {
+                ui.out_date = 0;
+            }
+            else
+            {
+                ui.out_date = 1;
+            }
 		}
 
 

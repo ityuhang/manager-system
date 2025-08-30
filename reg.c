@@ -39,9 +39,18 @@ void updata_expire_data()
 	user_info ui;
 	while(fread(&ui, sizeof(ui), 1, fp) > 0)
 	{
-		ui.out_date = check_data(&ui);
-		fseek(fp, -sizeof(ui), SEEK_CUR);
-		fwrite(&ui, sizeof(ui), 1, fp);
+		if(check_data(&ui) == 1)
+		{
+			ui.out_date = 1;
+			fseek(fp, -sizeof(ui), SEEK_CUR);
+			fwrite(&ui, sizeof(ui), 1, fp);
+		}
+		else if(ui.out_date == 1 && check_data(&ui) == 0)
+		{
+			ui.out_date = 0;
+			fseek(fp, -sizeof(ui), SEEK_CUR);
+			fwrite(&ui, sizeof(ui), 1, fp);
+		}
 	}
 
 	fclose(fp);
