@@ -8,6 +8,6 @@ void user_reg(void);
 void user_show(void);
 void user_del(void);
 void find_user(void);
-
+void updata_expire_data();
 
 #endif

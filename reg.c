@@ -26,6 +26,29 @@ int check_data(user_info* ui)
 	return 0;
 }
 
+void updata_expire_data()
+{
+	FILE* fp = fopen(USER_INFO_FILE, "rb+");
+
+	if(fp == NULL)
+	{
+		perror("读取用户信息失败");
+		return;
+	}
+
+	user_info ui;
+	while(fread(&ui, sizeof(ui), 1, fp) > 0)
+	{
+		ui.out_date = check_data(&ui);
+		fseek(fp, -sizeof(ui), SEEK_CUR);
+		fwrite(&ui, sizeof(ui), 1, fp);
+	}
+
+	fclose(fp);
+}
+
+
+
 
 // 仅在当前文件使用
 static unsigned int get_new_uid(void)
