@@ -276,73 +276,137 @@ void print_user_info(user_info* ui)
 }
 
 
+int pay(int user_id)
+{
+    user_info user;
+    FILE* fp = fopen(USER_INFO_FILE, "r+");
+    if(fp == NULL)
+    {
+        perror("读取用户信息失败");
+        return -1; // 使用-1表示文件错误
+    }
+    
+    int found = 0;
+    long pos = 0;
+    
+    while(fread(&user, sizeof(user), 1, fp) == 1)
+    {
+        if(user.user_id == user_id) {
+            found = 1;
+            pos = ftell(fp) - sizeof(user);
+            break;
+        }
+    }
 
+    if(!found)
+    {
+        fclose(fp);
+        printf("\n不存在此会员！\n");
+        return -2; // 使用-2表示用户不存在
+    }
+
+    if(user.balance <= 0)
+    {
+        fclose(fp);
+        return 0; // 余额不足
+    }
+
+    user.balance -= 1;
+    fseek(fp, pos, SEEK_SET);
+    fwrite(&user, sizeof(user), 1, fp);
+    fclose(fp);
+    return 1; // 支付成功
+}
 
 void user_show(void)
 {
-	user_info ui;
-	system("clear");
-	char card_num[11];
+    system("clear");
+    printf("\n会员请刷卡！\n");
 
-	printf("\n会员请刷卡！\n");
+    char card_num[11];
+    scanf("%s", card_num);    
 
-	scanf("%s", card_num);	
+    // 管理员界面
+    if(strcmp(card_num, "admin") == 0)
+    {
+        if(confirm_passwd()) {
+            admin_menu();
+        } else {
+            printf("密码错误\n");
+            press_any_key();
+        }
+        return;
+    }
 
-	// 启动管理员界面
-	if(strcmp(card_num, "admin") == 0)
-	{
-		
-		if(confirm_passwd())
-		{
-			admin_menu();
-		}
-		else
-		{
-			printf("密码错误\n");
-			press_any_key();
-		}
-	}
+    // 查找用户信息
+    user_info ui;
+    int found = 0;
+    
+    FILE* fp = fopen(USER_INFO_FILE, "rb");
+    if(fp == NULL)
+    {
+        printf("打开用户信息失败!\n");
+        press_any_key();
+        return;
+    }
 
-	else{
-		FILE* fp = fopen(USER_INFO_FILE, "rb");
+    while(fread(&ui, sizeof(ui), 1, fp) == 1)
+    {
+        if(strcmp(ui.card_num, card_num) == 0) {
+            found = 1;
+            break;
+        }
+    }
+    fclose(fp);
 
-		if(fp == NULL)
-		{
-			printf("卡片未注册，请联系工作人员处理!\n");
-			return;
-		}
+    if(!found)
+    {
+        printf("\n卡片未注册, 请联系工作人员处理...\n");
+        press_any_key();
+        return;
+    }
 
-		while(fread(&ui, sizeof(ui), 1, fp) == 1)
-		{
-			if(strcmp(ui.card_num, card_num) == 0)
-			{
-				break;
-			}
-		}
+    // 检查账户状态
+    if(ui.ban_state == 1) // 使用明确的常量
+    {
+        printf("\n该会员已注销\n");
+        press_any_key();
+        return;
+    }
+    else if(ui.ban_state == 1)
+    {
+        printf("\n该账户已被封禁,请联系工作人员进行处理...\n");
+        press_any_key();
+        return;
+    }
 
-		if(feof(fp))
-		{
-			printf("\n卡片未注册, 请联系工作人员处理...\n");
-		} 
-		else if(ui.ban_state == 1)
-		{
-			printf("\n该会员已注销\n");
-		}
-		else if(ui.ban_state == 1)
-		{
-			printf("\n该账户已被封禁,请联系工作人员进行处理...\n");
-		}
-		else
-		{
-			ui.out_date = check_data(&ui);
-			system("clear");
-			print_user_info(&ui);
-		}
+    // 执行支付
+    int pay_result = pay(ui.user_id);
+    
+    switch(pay_result)
+    {
+        case 1: // 支付成功
+            ui.balance -= 1; // 更新本地余额
+            ui.out_date = check_data(&ui);
+            system("clear");
+            print_user_info(&ui);
+            break;
+            
+        case 0: // 余额不足
+            system("clear");
+            printf("\n余额不足，请充值\n");
+            break;
+            
+        case -1: // 文件错误
+            printf("\n系统错误，请重试\n");
+            break;
+            
+        case -2: // 用户不存在
+            printf("\n用户信息异常，请联系工作人员\n");
+            break;
+    }
 
-		press_any_key();
-
-		fclose(fp);
-	}
+    press_any_key();
 }
 
 
